@@ -49,6 +49,7 @@ RUN mkdir /tmp/cmake-install && cd /tmp/cmake-install && \
     cd / && rm -rf /tmp/cmake-install
 
 ADD build_local_ollvm.sh /
+ENV OLLVM_DIR /ollvm
 VOLUME [ "/ollvm/src" ]
 WORKDIR /ollvm/src
 CMD [ "/build_local_ollvm.sh", "--docker" ]
