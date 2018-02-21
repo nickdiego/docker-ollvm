@@ -22,14 +22,15 @@ set -e
 
 function show_usage() {
   cat << EOF
-Usage: build_ollvm.sh --docker [cmake-args]
-Usage: build_ollvm.sh <path/to/ollvm/src>
+Usage: ollvm-build.sh <path/to/ollvm/src>
 
 Build a volume-mapped local Obfuscator-LLVM inside docker container.
 
 Available options:
-  -d|--docker         run in docker-mode
   -h|--help           show this help message
+
+Mandatory arguments:
+  path/to/ollvm/src   the O-LLVM source directory path
 
 All options after '--' are passed to CMake invocation.
 EOF
@@ -38,31 +39,18 @@ EOF
 # In docker-mode should be set in Dockerfile
 # In host-mode, set using command-line arg
 OLLVM_DIR=${OLLVM_DIR:-}
-OLLVM_VERISON='3.6'
 
 DOCKER_MODE=0
 BUILD_DIR_NAME='build_docker'
 INSTALL_DIR_NAME='_installed_'
 
-GUEST_SRC_DIR="$OLLVM_DIR/src"
-GUEST_BUILD_DIR="$GUEST_SRC_DIR/$BUILD_DIR_NAME"
+GUEST_BUILD_DIR="$OLLVM_DIR/$BUILD_DIR_NAME"
 GUEST_INSTALL_DIR="$GUEST_BUILD_DIR/$INSTALL_DIR_NAME"
 
 CMAKE_ARGS=(
     '-DCMAKE_BUILD_TYPE=Release'
     "-DCMAKE_INSTALL_PREFIX='$GUEST_INSTALL_DIR'"
 )
-
-NDK_VERSION='r14b'
-NDK_DIR_NAME="android-ndk-${NDK_VERSION}"
-NDK_MODIFIED_DIR_NAME="${NDK_DIR_NAME}-ollvm${OLLVM_VERISON}"
-NDK_FILE_NAME="${NDK_DIR_NAME}-linux-x86_64.zip"
-NDK_DOWNLOAD_URL="https://dl.google.com/android/repository/${NDK_FILE_NAME}"
-NDK_ORIGINAL_SHA1='becd161da6ed9a823e25be5c02955d9cbca1dbeb'
-
-GUEST_NDK_ROOT_PATH="$GUEST_BUILD_DIR/_ndk_"
-GUEST_NDK_FILE_PATH="$GUEST_NDK_ROOT_PATH/$NDK_FILE_NAME"
-GUEST_NDK_DIR_PATH="$GUEST_NDK_ROOT_PATH/$NDK_DIR_NAME"
 
 # Process command line arguments
 while [ $# -gt 0 ]; do
@@ -88,60 +76,10 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-function download_and_customize_ndk() {
-  echo "Starting NDK packaging.."
-  mkdir -p $GUEST_NDK_ROOT_PATH
-  cd $GUEST_NDK_ROOT_PATH
-
-  # Move this to Dockerfile/image(?)
-  if [ ! -f $GUEST_NDK_FILE_PATH ]; then
-    echo "Downloading Official NDK ${NDK_VERSION}.."
-    wget $NDK_DOWNLOAD_URL
-  fi
-
-  if ! echo "$NDK_ORIGINAL_SHA1 $NDK_FILE_NAME" | sha1sum -c; then
-    echo "NDK Signature check failed!"
-    exit 1
-  fi
-
-  if [ -e $GUEST_NDK_DIR_PATH ]; then
-    echo "Removing old NDK directory.."
-    rm -rf $GUEST_NDK_DIR_PATH
-  fi
-
-  echo "Unzipping NDK files into ${PWD}"
-  unzip -q $NDK_FILE_NAME
-
-  local ndk_toolchains_config_dir="build/core/toolchains"
-  local toolchain_name="ollvm-${OLLVM_VERISON}"
-  local prebuilt_dir="toolchains/$toolchain_name/prebuilt/linux-x86_64/"
-  local setup_mk_regex="s|get-toolchain-root,llvm|get-toolchain-root,${toolchain_name}|g"
-
-  echo "Modifying NDK.."
-  cd $GUEST_NDK_DIR_PATH
-  mkdir -pv $prebuilt_dir
-  mv -fv ${GUEST_INSTALL_DIR}/* ${prebuilt_dir}
-
-  for config_dir in ${ndk_toolchains_config_dir}/*-clang; do
-    new_config_dir="${config_dir}-${toolchain_name}"
-    echo -n "Configuring toolchain ${new_config_dir} .. "
-    cp -rf $config_dir $new_config_dir
-    sed -i "$setup_mk_regex" "$new_config_dir/setup.mk"
-    echo done
-  done
-
-  local output_file="${GUEST_NDK_ROOT_PATH}/${NDK_MODIFIED_DIR_NAME}-linux-x86_64.tar.gz"
-  echo "Packaging modified NDK into $output_file"
-  cd $GUEST_NDK_ROOT_PATH
-  test -d $NDK_MODIFIED_DIR_NAME && rm -rf $NDK_MODIFIED_DIR_NAME
-  mv $NDK_DIR_NAME $NDK_MODIFIED_DIR_NAME
-  tar -czf $output_file $NDK_MODIFIED_DIR_NAME
-}
-
 if (( DOCKER_MODE )); then
 
   # Checking source folder sanity-check
-  if [ ! -f "$GUEST_SRC_DIR/llvm.spec.in" ]; then
+  if [ ! -f "$OLLVM_DIR/llvm.spec.in" ]; then
       echo "Invalid O-LLVM source dir. Aborting..."
       exit 1
   fi
@@ -149,9 +87,9 @@ if (( DOCKER_MODE )); then
   mkdir -p "$GUEST_BUILD_DIR"
   pushd "$GUEST_BUILD_DIR"
   echo "Running build"
-  cmake -GNinja "${CMAKE_ARGS[@]}" "$GUEST_SRC_DIR"
+  cmake -GNinja "${CMAKE_ARGS[@]}" "$OLLVM_DIR"
   ninja -j3 install
-  download_and_customize_ndk
+  # TODO pakage install dir
 
 else # script called from host
 
@@ -170,7 +108,4 @@ else # script called from host
   echo "Docker image: $DOCKER_IMAGE_NAME"
   docker run "${DOCKER_OPTS[@]}" -it $DOCKER_IMAGE_NAME
   echo "Build finished successfully. Output directory: $OLLVM_DIR/$BUILD_DIR_NAME"
-
 fi
-
-echo "Done"
