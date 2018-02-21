@@ -48,9 +48,9 @@ RUN mkdir /tmp/cmake-install && cd /tmp/cmake-install && \
     tar xzf cmake-3.7.2-Linux-x86_64.tar.gz -C /usr/local --strip-components=1 && \
     cd / && rm -rf /tmp/cmake-install
 
-ADD build_local_ollvm.sh /
+ADD build_ollvm.sh /
 ENV OLLVM_DIR /ollvm
 VOLUME [ "/ollvm/src" ]
 WORKDIR /ollvm/src
-CMD [ "/build_local_ollvm.sh", "--docker" ]
+CMD [ "/build_ollvm.sh", "--docker" ]
 

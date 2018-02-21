@@ -22,8 +22,8 @@ set -e
 
 function show_usage() {
   cat << EOF
-Usage: build_local_ollvm.sh --docker [cmake-args]
-Usage: build_local_ollvm.sh <path/to/ollvm/src>
+Usage: build_ollvm.sh --docker [cmake-args]
+Usage: build_ollvm.sh <path/to/ollvm/src>
 
 Build a volume-mapped local Obfuscator-LLVM inside docker container.
 
@@ -161,8 +161,8 @@ else # script called from host
     exit 1
   fi
 
-  DOCKER_IMAGE_NAME='nickdiego/ollvm'
-  DOCKER_CONTAINER_NAME='ollvm-builder'
+  DOCKER_IMAGE_NAME='nickdiego/ollvm-build'
+  DOCKER_CONTAINER_NAME='ollvm-build'
   DOCKER_OPTS=( '--name' $DOCKER_CONTAINER_NAME --rm  -v "$OLLVM_DIR:/ollvm/src" )
 
   echo "Starting O-LLVM build.."

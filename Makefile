@@ -1,5 +1,5 @@
 DOCKER = docker
-IMAGE = nickdiego/ollvm
+IMAGE = nickdiego/ollvm-build
 
 build: Dockerfile
 	$(DOCKER) build -t $(IMAGE) .
