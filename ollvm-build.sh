@@ -25,11 +25,13 @@ function show_usage() {
 Usage: ollvm-build.sh <path/to/ollvm/src>
 
 Build a volume-mapped local Obfuscator-LLVM inside docker container.
+If no arguments are given, 'bash' is executed in the build container
+instead of the build script.
 
 Available options:
   -h|--help           show this help message
 
-Mandatory arguments:
+Positional arguments:
   path/to/ollvm/src   the O-LLVM source directory path
 
 All options after '--' are passed to CMake invocation.
@@ -94,9 +96,9 @@ if (( DOCKER_MODE )); then
 else # script called from host
 
   if [ -z $OLLVM_DIR ]; then
-    echo "Error: OLLVM_DIR not set!"
+    echo "O-LLVM source dir not set. Entering in bash mode.."
     show_usage
-    exit 1
+    DOCKER_CMD='bash'
   fi
 
   DOCKER_IMAGE_NAME='nickdiego/ollvm-build'
@@ -106,6 +108,6 @@ else # script called from host
   echo "Starting O-LLVM build.."
   echo "Source dir  : $OLLVM_DIR"
   echo "Docker image: $DOCKER_IMAGE_NAME"
-  docker run "${DOCKER_OPTS[@]}" -it $DOCKER_IMAGE_NAME
+  docker run "${DOCKER_OPTS[@]}" -it $DOCKER_IMAGE_NAME $DOCKER_CMD
   echo "Build finished successfully. Output directory: $OLLVM_DIR/$BUILD_DIR_NAME"
 fi
