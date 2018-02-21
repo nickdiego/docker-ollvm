@@ -102,7 +102,7 @@ echo "Unzipping NDK files into ${PWD}"
 unzip -q $NDK_FILE_NAME
 
 ndk_toolchains_config_dir="build/core/toolchains"
-toolchain_name="ollvm-${OLLVM_VERISON}"
+toolchain_name="ollvm${OLLVM_VERISON}"
 prebuilt_dir="toolchains/$toolchain_name/prebuilt/linux-x86_64/"
 setup_mk_regex="s|get-toolchain-root,llvm|get-toolchain-root,${toolchain_name}|g"
 
