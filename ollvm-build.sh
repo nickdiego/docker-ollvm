@@ -58,6 +58,7 @@ CMAKE_ARGS=(
 while [ $# -gt 0 ]; do
   case "$1" in
     --)
+      shift
       ;;
     -d|--docker)
       DOCKER_MODE=1
