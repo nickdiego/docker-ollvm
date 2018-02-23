@@ -88,8 +88,8 @@ if [ -z $OLLVM_DIR ] || [ ! -d $OLLVM_DIR ] || [ ! -e ${OLLVM_DIR}/bin/clang ]; 
   exit 1
 fi
 
-CLANG_PATH=$(ls ${OLLVM_DIR}/bin/clang-?.?)
-OLLVM_VERSION=${CLANG_PATH#${OLLVM_DIR}/bin/clang-}
+CLANG_PATH="${OLLVM_DIR}/bin/clang"
+OLLVM_VERSION=$($CLANG_PATH -v 2>&1 | head -n1 | sed 's|^.\+clang version \([^ ]\+\).\+$|\1|g')
 NDK_MODIFIED_DIR_NAME="${NDK_DIR_NAME}-ollvm${OLLVM_VERSION}"
 OUT_FILE="${OUT_DIR}/${NDK_MODIFIED_DIR_NAME}-linux-x86_64.tar.gz"
 
