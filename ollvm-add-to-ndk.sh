@@ -80,18 +80,25 @@ if [ -z $NDK_SHA1 ]; then
   exit 1
 fi
 
+# Initialize and validate O-LLVM variables
+if [ -z $OLLVM_DIR ] || [ ! -d $OLLVM_DIR ] || [ ! -e ${OLLVM_DIR}/bin/clang ]; then
   echo "Error: invalid OLLVM_DIR: '$OLLVM_DIR'"
   echo
   show_usage
   exit 1
 fi
 
-# TODO extract from banaries info
-OLLVM_VERISON='3.6'
-NDK_MODIFIED_DIR_NAME="${NDK_DIR_NAME}-ollvm${OLLVM_VERISON}"
+CLANG_PATH=$(ls ${OLLVM_DIR}/bin/clang-?.?)
+OLLVM_VERSION=${CLANG_PATH#${OLLVM_DIR}/bin/clang-}
+NDK_MODIFIED_DIR_NAME="${NDK_DIR_NAME}-ollvm${OLLVM_VERSION}"
 OUT_FILE="${OUT_DIR}/${NDK_MODIFIED_DIR_NAME}-linux-x86_64.tar.gz"
 
-echo "Starting NDK packaging.."
+echo "##"
+echo "## Starting NDK packaging.."
+echo "## O-LLVM directory: $OLLVM_DIR"
+echo "## O-LLVM Version  : $OLLVM_VERSION"
+echo "## NDK Version     : $NDK_VERSION"
+echo "##"
 
 mkdir -p $TMP_DIR
 cd $TMP_DIR
@@ -116,14 +123,14 @@ echo "Unzipping NDK files into ${PWD}"
 unzip -q $NDK_FILE_NAME
 
 ndk_toolchains_config_dir="build/core/toolchains"
-toolchain_name="ollvm${OLLVM_VERISON}"
+toolchain_name="ollvm${OLLVM_VERSION}"
 prebuilt_dir="toolchains/$toolchain_name/prebuilt/linux-x86_64/"
 setup_mk_regex="s|get-toolchain-root,llvm|get-toolchain-root,${toolchain_name}|g"
 
 echo "Modifying NDK.."
 cd $NDK_DIR_PATH
 mkdir -pv $prebuilt_dir
-mv -fv ${OLLVM_DIR}/* ${prebuilt_dir}
+cp -rfv ${OLLVM_DIR}/* ${prebuilt_dir}
 
 for config_dir in ${ndk_toolchains_config_dir}/*-clang; do
   new_config_dir="${config_dir}-${toolchain_name}"
