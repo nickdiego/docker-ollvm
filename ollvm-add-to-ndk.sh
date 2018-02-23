@@ -23,12 +23,13 @@ set -e
 
 function show_usage() {
   cat << EOF
-Usage: ollvm-add-to-ndk.sh <ollvm/binaries/path>
+Usage: ollvm-add-to-ndk.sh [options] <ollvm/binaries/path>
 
 Build a volume-mapped local Obfuscator-LLVM inside docker container.
 
 Available options:
   -h|--help               show this help message
+  -n|--ndk-version        Android NDK version (Supported versions: r12b, r13b, r14b)
 
 Manadatory arguments:
   ollvm/binaries/path     the path for the O-LLVM installation dir or tar.gz package
@@ -36,18 +37,10 @@ EOF
 }
 
 OLLVM_DIR=${OLLVM_DIR:-}
-
 NDK_VERSION=${NDK_VERSION:-r14b}
-NDK_DIR_NAME="android-ndk-${NDK_VERSION}"
-NDK_FILE_NAME="${NDK_DIR_NAME}-linux-x86_64.zip"
-NDK_DOWNLOAD_URL="https://dl.google.com/android/repository/${NDK_FILE_NAME}"
-NDK_ORIGINAL_SHA1='becd161da6ed9a823e25be5c02955d9cbca1dbeb'
 
 TMP_DIR=$(readlink -f .tmp) # TODO suport cmdline option to overwrite this?
 OUT_DIR=$PWD
-
-NDK_FILE_PATH="$TMP_DIR/$NDK_FILE_NAME"
-NDK_DIR_PATH="$TMP_DIR/$NDK_DIR_NAME"
 
 # Process command line arguments
 while [ $# -gt 0 ]; do
@@ -58,14 +51,35 @@ while [ $# -gt 0 ]; do
       show_usage
       exit 0
       ;;
+    -n|--ndk-version)
+      shift
+      NDK_VERSION=$1
+      ;;
     *)
       OLLVM_DIR=$(readlink -f $1)
       shift
   esac
 done
 
-# Validating O-LLVM package
-if [ -z $OLLVM_DIR ] || [ ! -d $OLLVM_DIR ]; then
+# Initialize and validate NDK variables
+NDK_DIR_NAME="android-ndk-${NDK_VERSION}"
+NDK_FILE_NAME="${NDK_DIR_NAME}-linux-x86_64.zip"
+NDK_DOWNLOAD_URL="https://dl.google.com/android/repository/${NDK_FILE_NAME}"
+NDK_FILE_PATH="$TMP_DIR/$NDK_FILE_NAME"
+NDK_DIR_PATH="$TMP_DIR/$NDK_DIR_NAME"
+
+NDK_SHA1_r12b='170a119bfa0f0ce5dc932405eaa3a7cc61b27694'
+NDK_SHA1_r13b='0600157c4ddf50ec15b8a037cfc474143f718fd0'
+NDK_SHA1_r14b='becd161da6ed9a823e25be5c02955d9cbca1dbeb'
+NDK_SHA1=$(eval "echo \$NDK_SHA1_${NDK_VERSION}")
+
+if [ -z $NDK_SHA1 ]; then
+  echo "Unsupported NDK_VERSION '$NDK_VERSION'"
+  echo
+  show_usage
+  exit 1
+fi
+
   echo "Error: invalid OLLVM_DIR: '$OLLVM_DIR'"
   echo
   show_usage
@@ -88,7 +102,7 @@ if [ ! -f $NDK_FILE_PATH ]; then
   wget $NDK_DOWNLOAD_URL
 fi
 
-if ! echo "$NDK_ORIGINAL_SHA1 $NDK_FILE_NAME" | sha1sum -c; then
+if ! echo "$NDK_SHA1 $NDK_FILE_NAME" | sha1sum -c; then
   echo "NDK Signature check failed!"
   exit 1
 fi
