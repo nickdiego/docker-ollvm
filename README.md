@@ -4,21 +4,24 @@ This repository provides a Dockerfile and some helper shell scripts useful to ea
 
 **Basic usage:**
 
-- Run a build of O-LLVM in the docker container, using `ollvm/source/dir` as source directory 
+- Build O-LLVM within a docker container, using `ollvm/source/dir` as source directory 
 The output build directory will be in `path/to/ollvm/source/dir/build_docker`.
 ```bash
 ./ollvm-build.sh ollvm/source/dir
 ```
 
-- Add O-LLVM toolchain into Android Official NDK, using `ollvm/binaries/dir` as binary directory
-(result from a previous OLLVM build). The output NDK package will be generated in the directory
-where the script has been executed from.
+- Add O-LLVM toolchain into Official Android NDK, using `ollvm/artifacts/dir` as binary directory
+(result from a previous OLLVM build). The output NDK package will be generated into the current
+working directory.
 ```bash
-./ollvm-build.sh ollvm/source/dir
+./ollvm-add-to-ndk.sh ollvm/artifacts/dir
 ```
 
 **Using in Gitlab-CI**
 
+Another use case where these scripts are very useful is to integrate O-LLVM build process into a Continuous Integration
+system which is very important when researching/hacking O-LLVM, for example adding some experimental features or improveing
+the existing ones.
 Below is an example on how to build O-LLVM and generate a NDK with O-LLVM toolchain using the docker image built from this repository:
 
 ```yaml
