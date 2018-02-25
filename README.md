@@ -20,8 +20,8 @@ working directory.
 **Using in Gitlab-CI**
 
 Another use case where these scripts are very useful is to integrate O-LLVM build process into a Continuous Integration
-system which is very important when researching/hacking O-LLVM, for example adding some experimental features or improveing
-the existing ones.
+system, which is very handy when researching/hacking O-LLVM (E.g: Adding some experimental features or improving
+the existing ones).
 Below is an example on how to build O-LLVM and generate a NDK with O-LLVM toolchain using the docker image built from this repository:
 
 ```yaml
