@@ -5,7 +5,7 @@ This repository provides a Dockerfile and some helper shell scripts useful to ea
 #### Basic usage
 
 - Build O-LLVM within a docker container, using `ollvm/source/dir` as source directory 
-The output build directory will be in `path/to/ollvm/source/dir/build_docker`.
+The output build directory will be in `ollvm/source/dir/build_docker`.
 ```bash
 ./ollvm-build.sh ollvm/source/dir
 ```
