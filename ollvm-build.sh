@@ -41,6 +41,7 @@ EOF
 # In docker-mode should be set in Dockerfile
 # In host-mode, set using command-line arg
 OLLVM_DIR=${OLLVM_DIR:-}
+CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-Release}
 
 DOCKER_MODE=0
 BUILD_DIR_NAME='build_docker'
@@ -50,8 +51,7 @@ GUEST_BUILD_DIR="$OLLVM_DIR/$BUILD_DIR_NAME"
 GUEST_INSTALL_DIR="$GUEST_BUILD_DIR/$INSTALL_DIR_NAME"
 
 CMAKE_ARGS=(
-    '-DCMAKE_BUILD_TYPE=Release'
-    "-DCMAKE_INSTALL_PREFIX='$GUEST_INSTALL_DIR'"
+  "-DCMAKE_INSTALL_PREFIX='$GUEST_INSTALL_DIR'"
 )
 
 # Process command line arguments
@@ -87,6 +87,12 @@ if (( DOCKER_MODE )); then
       exit 1
   fi
 
+  BUILD_TYPE_SET=0
+  for i in ${CMAKE_ARGS[@]}; do
+    grep "^-DCMAKE_BUILD_TYPE=" <<< "$i" && BUILD_TYPE_SET=1
+  done
+  (( BUILD_TYPE_SET )) || CMAKE_ARGS+=( "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}" )
+
   mkdir -p "$GUEST_BUILD_DIR"
   pushd "$GUEST_BUILD_DIR"
   echo "Running build"
@@ -100,6 +106,8 @@ else # script called from host
     echo "O-LLVM source dir not set. Entering in bash mode.."
     show_usage
     DOCKER_CMD='bash'
+  else
+    DOCKER_CMD="/scripts/ollvm-build.sh --docker -- ${CMAKE_ARGS[@]}"
   fi
 
   DOCKER_IMAGE_NAME='nickdiego/ollvm-build'
