@@ -30,6 +30,7 @@ Build a volume-mapped local Obfuscator-LLVM inside docker container.
 Available options:
   -h|--help               show this help message
   -n|--ndk-version        Android NDK version (Supported versions: r12b, r13b, r14b)
+  -z|--no-gzip            Do not compress NDK using gzip
 
 Manadatory arguments:
   ollvm/binaries/path     the path for the O-LLVM installation dir or tar.gz package
@@ -38,6 +39,7 @@ EOF
 
 OLLVM_DIR=${OLLVM_DIR:-}
 NDK_VERSION=${NDK_VERSION:-r14b}
+GZIP_NDK=${GZIP_NDK:-1} # TODO move to command line option
 
 TMP_DIR=$(readlink -f .tmp) # TODO suport cmdline option to overwrite this?
 OUT_DIR=$PWD
@@ -52,6 +54,10 @@ while [ $# -gt 0 ]; do
       exit 0
       ;;
     -n|--ndk-version)
+      shift
+      NDK_VERSION=$1
+      ;;
+    -z|--no-gzip)
       shift
       NDK_VERSION=$1
       ;;
@@ -140,11 +146,17 @@ for config_dir in ${ndk_toolchains_config_dir}/*-clang; do
   echo done
 done
 
-echo "Packaging modified NDK into $OUT_FILE"
 cd $TMP_DIR
 test -d $NDK_MODIFIED_DIR_NAME && rm -rf $NDK_MODIFIED_DIR_NAME
 cp -r $NDK_DIR_NAME $NDK_MODIFIED_DIR_NAME
-tar -czf $OUT_FILE $NDK_MODIFIED_DIR_NAME
+
+if (( GZIP_NDK )); then
+  echo "Packaging modified NDK into $OUT_FILE"
+  tar -czf $OUT_FILE $NDK_MODIFIED_DIR_NAME
+else
+  echo "Generated modified NDK into ${OUT_DIR}/${NDK_MODIFIED_DIR_NAME}"
+  mv $NDK_MODIFIED_DIR_NAME $OUT_DIR
+fi
 
 # TODO Generate package checksum/signature?
 
