@@ -2,6 +2,11 @@
 
 This repository provides a Dockerfile and some helper shell scripts useful to easily build Obfuscator-LLVM project from source as well as configuring it as a Android NDK toolchain. The scripts can be used both as standalone tools and inside the Docker image.  
 
+#### Prerequisites
+
+- Bash
+- Docker (_ideally [configured to be executed as non-root user](https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)_)
+
 #### Basic usage
 
 - Build O-LLVM within a docker container, using `ollvm/source/dir` as source directory 
