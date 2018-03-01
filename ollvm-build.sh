@@ -42,17 +42,12 @@ EOF
 # In host-mode, set using command-line arg
 OLLVM_DIR=${OLLVM_DIR:-}
 CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-Release}
-
 DOCKER_MODE=0
+
 BUILD_DIR_NAME='build_docker'
 INSTALL_DIR_NAME='_installed_'
 
-GUEST_BUILD_DIR="$OLLVM_DIR/$BUILD_DIR_NAME"
-GUEST_INSTALL_DIR="$GUEST_BUILD_DIR/$INSTALL_DIR_NAME"
-
-CMAKE_ARGS=(
-  "-DCMAKE_INSTALL_PREFIX='$GUEST_INSTALL_DIR'"
-)
+declare -a CMAKE_ARGS
 
 # Process command line arguments
 while [ $# -gt 0 ]; do
@@ -86,6 +81,10 @@ if (( DOCKER_MODE )); then
       echo "Invalid O-LLVM source dir. Aborting..."
       exit 1
   fi
+
+  GUEST_BUILD_DIR="$OLLVM_DIR/$BUILD_DIR_NAME"
+  GUEST_INSTALL_DIR="$GUEST_BUILD_DIR/$INSTALL_DIR_NAME"
+  CMAKE_ARGS+=( "-DCMAKE_INSTALL_PREFIX='$GUEST_INSTALL_DIR'" )
 
   BUILD_TYPE_SET=0
   for i in ${CMAKE_ARGS[@]}; do
