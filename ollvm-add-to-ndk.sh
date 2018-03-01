@@ -47,24 +47,20 @@ OUT_DIR=$PWD
 # Process command line arguments
 while [ $# -gt 0 ]; do
   case "$1" in
-    --)
-      ;;
     -h|--help)
       show_usage
       exit 0
       ;;
     -n|--ndk-version)
-      shift
-      NDK_VERSION=$1
+      shift && NDK_VERSION=$1
       ;;
     -z|--no-gzip)
-      shift
-      NDK_VERSION=$1
+      GZIP_NDK=0
       ;;
     *)
       OLLVM_DIR=$(readlink -f $1)
-      shift
   esac
+  shift
 done
 
 # Initialize and validate NDK variables
