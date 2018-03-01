@@ -4,6 +4,9 @@ IMAGE = nickdiego/ollvm-build
 build: Dockerfile
 	$(DOCKER) build -t $(IMAGE) .
 
-all: build
+push: build
+	$(DOCKER) push $(IMAGE):latest
+
+all: push
 
 .PHONY: all
