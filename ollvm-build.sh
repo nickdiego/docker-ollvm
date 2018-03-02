@@ -114,12 +114,13 @@ if (( DOCKER_MODE )); then
   echo "Running build"
   cmake -GNinja "${CMAKE_ARGS[@]}" "$OLLVM_DIR"
 
+  ninja -j3
   if (( BUILD_ONLY )); then
     echo "Build done!"
     exit 0
   fi
 
-  ninja -j3 install
+  ninja install
   # TODO pakage install dir
 
 else # script called from host
