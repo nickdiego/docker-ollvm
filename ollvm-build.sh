@@ -42,11 +42,10 @@ EOF
 # In docker-mode should be set in Dockerfile
 # In host-mode, set using command-line arg
 OLLVM_DIR=${OLLVM_DIR:-}
-CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-Release}
 DOCKER_MODE=0
 BUILD_ONLY=0
 
-BUILD_DIR_NAME='build_docker'
+BUILD_DIR_NAME='build'
 INSTALL_DIR_NAME='_installed_'
 
 declare -a CMAKE_ARGS
@@ -81,6 +80,23 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# Process CMAKE_ARGS and generate build vars:
+# BUILD_TYPE, BUILD_DIR, INSTALL_DIR
+BUILD_TYPE=${BUILD_TYPE:-Release}
+CMAKE_ARGS_HAVE_BUILD_TYPE=0
+
+for i in ${CMAKE_ARGS[@]}; do
+  if grep "^-DCMAKE_BUILD_TYPE=" <<< "$i"; then
+    CMAKE_ARGS_HAVE_BUILD_TYPE=1
+    BUILD_TYPE="${i#-DCMAKE_BUILD_TYPE=}"
+    break
+  fi
+done
+(( CMAKE_ARGS_HAVE_BUILD_TYPE )) || CMAKE_ARGS+=( "-DCMAKE_BUILD_TYPE=${BUILD_TYPE}" )
+
+BUILD_DIR="${OLLVM_DIR}/${BUILD_DIR_NAME}_${BUILD_TYPE,,}"
+INSTALL_DIR="${BUILD_DIR}/${INSTALL_DIR_NAME}"
+
 if (( DOCKER_MODE )); then
 
   # Checking source folder sanity-check
@@ -89,18 +105,12 @@ if (( DOCKER_MODE )); then
       exit 1
   fi
 
-  GUEST_BUILD_DIR="$OLLVM_DIR/$BUILD_DIR_NAME"
-  GUEST_INSTALL_DIR="$GUEST_BUILD_DIR/$INSTALL_DIR_NAME"
-  CMAKE_ARGS+=( "-DCMAKE_INSTALL_PREFIX='$GUEST_INSTALL_DIR'" )
+  # FIXME: -DCMAKE_INSTALL_PREFIX not supported in DOCKER_MODE=0
+  # Currently it's always overwritten with BUILD_DIR/INSTALL_DIR_NAME
+  CMAKE_ARGS+=( "-DCMAKE_INSTALL_PREFIX='$INSTALL_DIR'" )
 
-  BUILD_TYPE_SET=0
-  for i in ${CMAKE_ARGS[@]}; do
-    grep "^-DCMAKE_BUILD_TYPE=" <<< "$i" && BUILD_TYPE_SET=1
-  done
-  (( BUILD_TYPE_SET )) || CMAKE_ARGS+=( "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}" )
-
-  mkdir -p "$GUEST_BUILD_DIR"
-  pushd "$GUEST_BUILD_DIR"
+  mkdir -p "$BUILD_DIR"
+  cd "$BUILD_DIR"
   echo "Running build"
   cmake -GNinja "${CMAKE_ARGS[@]}" "$OLLVM_DIR"
 
@@ -132,5 +142,5 @@ else # script called from host
   echo "Source dir  : $OLLVM_DIR"
   echo "Docker image: $DOCKER_IMAGE_NAME"
   docker run "${DOCKER_OPTS[@]}" -it $DOCKER_IMAGE_NAME $DOCKER_CMD
-  echo "Build finished successfully. Output directory: $OLLVM_DIR/$BUILD_DIR_NAME"
+  echo "Build finished successfully. Output directory: $BUILD_DIR"
 fi
