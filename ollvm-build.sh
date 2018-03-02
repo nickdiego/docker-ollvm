@@ -30,6 +30,7 @@ instead of the build script.
 
 Available options:
   -h|--help           show this help message
+  -b|--build-only     run only the build step (do not install)
 
 Positional arguments:
   path/to/ollvm/src   the O-LLVM source directory path
@@ -43,11 +44,13 @@ EOF
 OLLVM_DIR=${OLLVM_DIR:-}
 CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-Release}
 DOCKER_MODE=0
+BUILD_ONLY=0
 
 BUILD_DIR_NAME='build_docker'
 INSTALL_DIR_NAME='_installed_'
 
 declare -a CMAKE_ARGS
+declare -a FWD_ARGS
 
 # Process command line arguments
 while [ $# -gt 0 ]; do
@@ -57,6 +60,10 @@ while [ $# -gt 0 ]; do
       ;;
     -d|--docker)
       DOCKER_MODE=1
+      shift
+      ;;
+    -b|--build-only)
+      BUILD_ONLY=1
       shift
       ;;
     -h|--help)
@@ -96,17 +103,25 @@ if (( DOCKER_MODE )); then
   pushd "$GUEST_BUILD_DIR"
   echo "Running build"
   cmake -GNinja "${CMAKE_ARGS[@]}" "$OLLVM_DIR"
+
+  if (( BUILD_ONLY )); then
+    echo "Build done!"
+    exit 0
+  fi
+
   ninja -j3 install
   # TODO pakage install dir
 
 else # script called from host
+
+  (( BUILD_ONLY )) && FWD_ARGS+=( --build-only )
 
   if [ -z $OLLVM_DIR ]; then
     echo "O-LLVM source dir not set. Entering in bash mode.."
     show_usage
     DOCKER_CMD='bash'
   else
-    DOCKER_CMD="/scripts/ollvm-build.sh --docker -- ${CMAKE_ARGS[@]}"
+    DOCKER_CMD="/scripts/ollvm-build.sh --docker ${FWD_ARGS[*]} ${CMAKE_ARGS:+-- ${CMAKE_ARGS[*]}}"
   fi
 
   DOCKER_IMAGE_NAME='nickdiego/ollvm-build'
