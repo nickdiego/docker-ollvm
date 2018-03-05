@@ -139,9 +139,11 @@ else # script called from host
   DOCKER_CONTAINER_NAME='ollvm-build'
   DOCKER_OPTS=( '--name' $DOCKER_CONTAINER_NAME --rm  -v "$OLLVM_DIR:/ollvm/src" )
 
-  echo "Starting O-LLVM build.."
-  echo "Source dir  : $OLLVM_DIR"
-  echo "Docker image: $DOCKER_IMAGE_NAME"
+  echo "##"
+  echo "## Starting O-LLVM build.."
+  echo "## Source dir  : $OLLVM_DIR"
+  echo "## Docker image: $DOCKER_IMAGE_NAME"
+  echo "##"
   docker run "${DOCKER_OPTS[@]}" -it $DOCKER_IMAGE_NAME $DOCKER_CMD
   echo "Build finished successfully. Output directory: $BUILD_DIR"
 fi
