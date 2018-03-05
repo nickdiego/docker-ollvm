@@ -105,14 +105,17 @@ if (( DOCKER_MODE )); then
       exit 1
   fi
 
-  # FIXME: -DCMAKE_INSTALL_PREFIX not supported in DOCKER_MODE=0
-  # Currently it's always overwritten with BUILD_DIR/INSTALL_DIR_NAME
-  CMAKE_ARGS+=( "-DCMAKE_INSTALL_PREFIX='$INSTALL_DIR'" )
-
   mkdir -p "$BUILD_DIR"
   cd "$BUILD_DIR"
-  echo "Running build"
-  cmake -GNinja "${CMAKE_ARGS[@]}" "$OLLVM_DIR"
+
+  if [ ! -f 'build.ninja' ]; then
+    # FIXME: -DCMAKE_INSTALL_PREFIX not supported in DOCKER_MODE=0
+    # Currently it's always overwritten with BUILD_DIR/INSTALL_DIR_NAME
+    CMAKE_ARGS+=( "-DCMAKE_INSTALL_PREFIX='$INSTALL_DIR'" )
+
+    echo "Running cmake"
+    cmake -GNinja "${CMAKE_ARGS[@]}" "$OLLVM_DIR"
+  fi
 
   ninja -j3
   if (( BUILD_ONLY )); then
